@@ -401,65 +401,91 @@ function excelImportieren(e) {
 
     leser.readAsArrayBuffer(datei);
 }
-// Kontrollen als CSV-Datei exportieren
+// Kontrollen als Excel-Datei exportieren
 function kontrollenExportieren() {
-    const zeilen = [];
-
-    zeilen.push([
-        "Studio",
-        "Ort",
-        "Datum",
-        "Uhrzeit",
-        "Mitarbeiter",
-        "Kontrollierte Personen",
-        "Feststellungen",
-        "Weitere Feststellungen"
-    ]);
-
-    studios.forEach(studio => {
-        const kontrollen = kontrollHistorie[studio.id] || [];
-
-        kontrollen.forEach(k => {
-            zeilen.push([
-                studio.etablissement,
-                studio.ort,
-                k.datum,
-                k.uhrzeit,
-                k.mitarbeiter,
-                k.personen,
-                k.feststellungen,
-                k.weitere
-            ]);
-        });
-    });
-
-    if (zeilen.length === 1) {
-        alert("Es sind noch keine Kontrollen zum Export vorhanden.");
+    if (!window.XLSX) {
+        alert("Die Excel-Bibliothek wurde nicht geladen.");
         return;
     }
 
-    const csv = "\uFEFF" + zeilen.map(zeile =>
-        zeile.map(wert =>
-            '"' + String(wert ?? "").replace(/"/g, '""') + '"'
-        ).join(";")
-    ).join("\r\n");
+    const daten = [
+        [
+            "Ort",
+            "Adresse",
+            "Etablissement",
+            "Gebäude",
+            "Kontrollen",
+            "Kontakt",
+            "Bemerkung"
+        ]
+    ];
 
-    const datei = new Blob(
-        [csv],
-        { type: "text/csv;charset=utf-8;" }
+    studios.forEach(studio => {
+        const alteKontrollen = studio.kontrollen || "";
+        const neueKontrollen = kontrollHistorie[studio.id] || [];
+
+        const sortiert = [...neueKontrollen].sort((a, b) =>
+            b.zeitpunkt.localeCompare(a.zeitpunkt)
+        );
+
+        const neueEintraege = sortiert.map(k => {
+            const feststellungen = [];
+
+            if (Number(k.meldeverstoss) > 0) {
+                feststellungen.push(k.meldeverstoss + "x Meldeverstoss");
+            }
+            if (Number(k.festnahme) > 0) {
+                feststellungen.push(k.festnahme + "x Festnahme");
+            }
+            if (Number(k.ripol) > 0) {
+                feststellungen.push(k.ripol + "x RIPOL-Ausschreibung");
+            }
+            if (Number(k.bericht) > 0) {
+                feststellungen.push(k.bericht + "x Bericht allgemein");
+            }
+            if (Number(k.aufenthalt) > 0) {
+                feststellungen.push(k.aufenthalt + "x Aufenthaltsnachforschung");
+            }
+            if (k.weitere) {
+                feststellungen.push(k.weitere);
+            }
+
+            const beschreibung = feststellungen.length > 0
+                ? feststellungen.join(", ")
+                : "alles in Ordnung";
+
+            return `${k.datum}, ${k.uhrzeit} Uhr, ${k.personen} Personen kontrolliert, ${beschreibung}`;
+        });
+
+        const alleKontrollen = [
+            ...neueEintraege,
+            alteKontrollen
+        ].filter(eintrag => eintrag && eintrag.trim() !== "").join("\n");
+
+        daten.push([
+            studio.ort || "",
+            studio.adresse || "",
+            studio.etablissement || "",
+            studio.gebaeude || "",
+            alleKontrollen,
+            studio.kontakt || "",
+            studio.bemerkung || ""
+        ]);
+    });
+
+    const arbeitsmappe = XLSX.utils.book_new();
+    const tabelle = XLSX.utils.aoa_to_sheet(daten);
+
+    XLSX.utils.book_append_sheet(
+        arbeitsmappe,
+        tabelle,
+        "Studios"
     );
 
-    const url = URL.createObjectURL(datei);
-    const link = document.createElement("a");
-
-    link.href = url;
-    link.download = "Studio-Kontrollen.csv";
-
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    XLSX.writeFile(
+        arbeitsmappe,
+        "Studio-Kontrolle.xlsx"
+    );
 }
 
 // Dynamische Texte sicher anzeigen
