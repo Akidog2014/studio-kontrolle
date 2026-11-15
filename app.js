@@ -29,6 +29,9 @@ let studios = JSON.parse(
     JSON.stringify(TEST_STUDIOS)
 );
 
+// Originale Excel-Arbeitsmappe für den Export behalten
+let excelArbeitsmappe = null;
+let excelTabellenName = null;
 // Kontrollhistorie lokal auf dem Gerät speichern
 const SPEICHER_SCHLUESSEL = "studioKontrollHistorie";
 
