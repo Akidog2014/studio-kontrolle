@@ -2,7 +2,8 @@
 const app = document.getElementById("app");
 
 // Ausschliesslich erfundene Testdaten
-const studios = [
+// Studiostammdaten
+const TEST_STUDIOS = [
     {
         id: 1,
         ort: "Beispielort",
@@ -22,6 +23,11 @@ const studios = [
         bemerkung: ""
     }
 ];
+
+let studios = JSON.parse(
+    localStorage.getItem("studioStammdaten") ||
+    JSON.stringify(TEST_STUDIOS)
+);
 
 // Kontrollhistorie lokal auf dem Gerät speichern
 const SPEICHER_SCHLUESSEL = "studioKontrollHistorie";
@@ -70,8 +76,16 @@ app.innerHTML = `
     <section>
         <h2>Studio-Kontrolle</h2>
         <p>Mitarbeiter: <strong>${sicher(mitarbeiter)}</strong></p>
-
         <button id="suche">Studios suchen</button>
+
+        <button id="import">
+            Excel-Datei importieren
+        </button>
+
+        <input type="file"
+            id="excelDatei"
+            accept=".xlsx,.xls"
+            style="display:none;">
 
         <button id="export">
             Kontrollen exportieren
@@ -81,6 +95,13 @@ app.innerHTML = `
 
     document.getElementById("suche")
         .addEventListener("click", studiosuche);
+    document.getElementById("import")
+        .addEventListener("click", () => {
+        document.getElementById("excelDatei").click();
+    });
+
+    document.getElementById("excelDatei")
+        .addEventListener("change", excelImportieren);
     document.getElementById("export")
         .addEventListener("click", kontrollenExportieren);
 }
@@ -295,7 +316,91 @@ function kontrolleErfassen(id) {
             studioAnzeigen(id);
         });
 }
+// Excel-Datei importieren
+// Excel-Datei importieren
+function excelImportieren(e) {
+    const datei = e.target.files[0];
 
+    if (!datei) return;
+
+    const leser = new FileReader();
+
+    leser.onload = function(event) {
+        try {
+            const arbeitsmappe = XLSX.read(
+                event.target.result,
+                { type: "array" }
+            );
+
+            const tabellenName = arbeitsmappe.SheetNames[0];
+
+            if (!tabellenName) {
+                alert("Kein Tabellenblatt gefunden.");
+                return;
+            }
+
+            const tabelle = XLSX.utils.sheet_to_json(
+                arbeitsmappe.Sheets[tabellenName],
+                {
+                    header: 1,
+                    defval: "",
+                    raw: false
+                }
+            );
+
+            const importierteStudios = tabelle
+                .slice(1)
+                .map((zeile, index) => ({
+                    id: "excel-" + (index + 2),
+                    ort: String(zeile[0] || "").trim(),
+                    adresse: String(zeile[1] || "").trim(),
+                    etablissement: String(zeile[2] || "").trim(),
+                    gebaeude: String(zeile[3] || "").trim(),
+                    kontakt: String(zeile[5] || "").trim(),
+                    bemerkung: String(zeile[6] || "").trim()
+                }))
+                .filter(studio =>
+                    studio.ort ||
+                    studio.adresse ||
+                    studio.etablissement ||
+                    studio.gebaeude ||
+                    studio.kontakt ||
+                    studio.bemerkung
+                );
+
+            if (importierteStudios.length === 0) {
+                alert("Keine Studios gefunden.");
+                return;
+            }
+
+            studios = importierteStudios;
+
+            localStorage.setItem(
+                "studioStammdaten",
+                JSON.stringify(studios)
+            );
+
+            alert(
+                importierteStudios.length +
+                " Studios erfolgreich importiert."
+            );
+
+            startseite();
+
+        } catch (fehler) {
+            alert("Die Excel-Datei konnte nicht gelesen werden.");
+            console.error(fehler);
+        } finally {
+            e.target.value = "";
+        }
+    };
+
+    leser.onerror = function() {
+        alert("Die Datei konnte nicht geöffnet werden.");
+    };
+
+    leser.readAsArrayBuffer(datei);
+}
 // Kontrollen als CSV-Datei exportieren
 function kontrollenExportieren() {
     const zeilen = [];
