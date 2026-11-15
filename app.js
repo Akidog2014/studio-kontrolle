@@ -66,16 +66,23 @@ function startseite() {
         return;
     }
 
-    app.innerHTML = `
-        <section>
-            <h2>Studio-Kontrolle</h2>
-            <p>Mitarbeiter: <strong>${sicher(mitarbeiter)}</strong></p>
-            <button id="suche">Studios suchen</button>
-        </section>
-    `;
+app.innerHTML = `
+    <section>
+        <h2>Studio-Kontrolle</h2>
+        <p>Mitarbeiter: <strong>${sicher(mitarbeiter)}</strong></p>
+
+        <button id="suche">Studios suchen</button>
+
+        <button id="export">
+            Kontrollen exportieren
+        </button>
+    </section>
+`;
 
     document.getElementById("suche")
         .addEventListener("click", studiosuche);
+    document.getElementById("export")
+        .addEventListener("click", kontrollenExportieren);
 }
 
 // Suche nach Studios
@@ -281,12 +288,73 @@ function kontrolleErfassen(id) {
             kontrollHistorie[id].push(k);
 
             localStorage.setItem(
-    SPEICHER_SCHLUESSEL,
-    JSON.stringify(kontrollHistorie)
-);
+                SPEICHER_SCHLUESSEL,
+                JSON.stringify(kontrollHistorie)
+            );
 
             studioAnzeigen(id);
         });
+}
+
+// Kontrollen als CSV-Datei exportieren
+function kontrollenExportieren() {
+    const zeilen = [];
+
+    zeilen.push([
+        "Studio",
+        "Ort",
+        "Datum",
+        "Uhrzeit",
+        "Mitarbeiter",
+        "Kontrollierte Personen",
+        "Feststellungen",
+        "Weitere Feststellungen"
+    ]);
+
+    studios.forEach(studio => {
+        const kontrollen = kontrollHistorie[studio.id] || [];
+
+        kontrollen.forEach(k => {
+            zeilen.push([
+                studio.etablissement,
+                studio.ort,
+                k.datum,
+                k.uhrzeit,
+                k.mitarbeiter,
+                k.personen,
+                k.feststellungen,
+                k.weitere
+            ]);
+        });
+    });
+
+    if (zeilen.length === 1) {
+        alert("Es sind noch keine Kontrollen zum Export vorhanden.");
+        return;
+    }
+
+    const csv = "\uFEFF" + zeilen.map(zeile =>
+        zeile.map(wert =>
+            '"' + String(wert ?? "").replace(/"/g, '""') + '"'
+        ).join(";")
+    ).join("\r\n");
+
+    const datei = new Blob(
+        [csv],
+        { type: "text/csv;charset=utf-8;" }
+    );
+
+    const url = URL.createObjectURL(datei);
+    const link = document.createElement("a");
+
+    link.href = url;
+    link.download = "Studio-Kontrollen.csv";
+
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
 // Dynamische Texte sicher anzeigen
