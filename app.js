@@ -408,26 +408,22 @@ function excelImportieren(e) {
 
     leser.readAsArrayBuffer(datei);
 }
-// Kontrollen als Excel-Datei exportieren
+// Kontrollen in die importierte Original-Excel-Datei schreiben
 function kontrollenExportieren() {
     if (!window.XLSX) {
         alert("Die Excel-Bibliothek wurde nicht geladen.");
         return;
     }
 
-    const daten = [
-        [
-            "Ort",
-            "Adresse",
-            "Etablissement",
-            "Gebäude",
-            "Kontrollen",
-            "Kontakt",
-            "Bemerkung"
-        ]
-    ];
+    if (!excelArbeitsmappe || !excelTabellenName) {
+        alert("Bitte zuerst die Excel-Datei importieren.");
+        return;
+    }
 
-    studios.forEach(studio => {
+    const arbeitsblatt =
+        excelArbeitsmappe.Sheets[excelTabellenName];
+
+    studios.forEach((studio, index) => {
         const alteKontrollen = studio.kontrollen || "";
         const neueKontrollen = kontrollHistorie[studio.id] || [];
 
@@ -436,23 +432,38 @@ function kontrollenExportieren() {
         );
 
         const neueEintraege = sortiert.map(k => {
+            const werte = {};
+
+            String(k.feststellungen || "")
+                .split("|")
+                .forEach(teil => {
+                    const treffer = teil.trim().match(/^(.+?):\s*(\d+)$/);
+
+                    if (treffer) {
+                        werte[treffer[1].trim()] = Number(treffer[2]);
+                    }
+                });
+
             const feststellungen = [];
 
-            if (Number(k.meldeverstoss) > 0) {
-                feststellungen.push(k.meldeverstoss + "x Meldeverstoss");
-            }
-            if (Number(k.festnahme) > 0) {
-                feststellungen.push(k.festnahme + "x Festnahme");
-            }
-            if (Number(k.ripol) > 0) {
-                feststellungen.push(k.ripol + "x RIPOL-Ausschreibung");
-            }
-            if (Number(k.bericht) > 0) {
-                feststellungen.push(k.bericht + "x Bericht allgemein");
-            }
-            if (Number(k.aufenthalt) > 0) {
-                feststellungen.push(k.aufenthalt + "x Aufenthaltsnachforschung");
-            }
+            const kategorien = [
+                ["Meldeverstoss", "Meldeverstoss"],
+                ["Festnahme", "Festnahme"],
+                ["RIPOL-Ausschreibung", "RIPOL-Ausschreibung"],
+                ["Bericht allgemein", "Bericht allgemein"],
+                ["Aufenthaltsnachforschung", "Aufenthaltsnachforschung"]
+            ];
+
+            kategorien.forEach(([name, beschriftung]) => {
+                const anzahl = werte[name] || 0;
+
+                if (anzahl > 0) {
+                    feststellungen.push(
+                        anzahl + "x " + beschriftung
+                    );
+                }
+            });
+
             if (k.weitere) {
                 feststellungen.push(k.weitere);
             }
@@ -461,40 +472,38 @@ function kontrollenExportieren() {
                 ? feststellungen.join(", ")
                 : "alles in Ordnung";
 
-            return `${k.datum}, ${k.uhrzeit} Uhr, ${k.personen} Personen kontrolliert, ${beschreibung}`;
+            const datum = k.datum
+                ? k.datum.split("-").reverse().join(".")
+                : "";
+
+            return `${datum}, ${k.uhrzeit} Uhr, ${k.personen} Personen kontrolliert, ${beschreibung}`;
         });
 
         const alleKontrollen = [
             ...neueEintraege,
             alteKontrollen
-        ].filter(eintrag => eintrag && eintrag.trim() !== "").join("\n");
+        ]
+            .filter(eintrag => eintrag && eintrag.trim() !== "")
+            .join("\n");
 
-        daten.push([
-            studio.ort || "",
-            studio.adresse || "",
-            studio.etablissement || "",
-            studio.gebaeude || "",
-            alleKontrollen,
-            studio.kontakt || "",
-            studio.bemerkung || ""
-        ]);
+        const zellenAdresse = XLSX.utils.encode_cell({
+            r: index + 1,
+            c: 4
+        });
+
+        const zelle = arbeitsblatt[zellenAdresse] || {};
+        zelle.t = "s";
+        zelle.v = alleKontrollen;
+        arbeitsblatt[zellenAdresse] = zelle;
     });
 
-    const arbeitsmappe = XLSX.utils.book_new();
-    const tabelle = XLSX.utils.aoa_to_sheet(daten);
-
-    XLSX.utils.book_append_sheet(
-        arbeitsmappe,
-        tabelle,
-        "Studios"
-    );
-
     XLSX.writeFile(
-        arbeitsmappe,
-        "Studio-Kontrolle.xlsx"
+        excelArbeitsmappe,
+        "Studio-Kontrolle-aktualisiert.xlsx"
     );
-}
 
+    alert("Die aktualisierte Excel-Datei wurde erstellt.");
+}
 // Dynamische Texte sicher anzeigen
 function sicher(text) {
     return String(text ?? "").replace(/[&<>"']/g, zeichen => ({
