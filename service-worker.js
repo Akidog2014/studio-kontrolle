@@ -1,11 +1,12 @@
-const CACHE_NAME = "studio-kontrolle-v2";
+const CACHE_NAME = "studio-kontrolle-v3";
 
 const DATEIEN = [
     "./",
     "./index.html",
     "./style.css",
     "./app.js",
-    "./manifest.json"
+    "./manifest.json",
+    "./xlsx.full.min.js"
 ];
 
 self.addEventListener("install", event => {
