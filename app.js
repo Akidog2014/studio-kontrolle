@@ -23,9 +23,12 @@ const studios = [
     }
 ];
 
-// Kontrollen bleiben während dieses Prototyp-Tests
-// nur im Arbeitsspeicher.
-const kontrollHistorie = {};
+// Kontrollhistorie lokal auf dem Gerät speichern
+const SPEICHER_SCHLUESSEL = "studioKontrollHistorie";
+
+let kontrollHistorie = JSON.parse(
+    localStorage.getItem(SPEICHER_SCHLUESSEL) || "{}"
+);
 
 // Mitarbeiterkürzel einmalig speichern
 let mitarbeiter = localStorage.getItem("mitarbeiter");
