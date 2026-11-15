@@ -320,7 +320,6 @@ function kontrolleErfassen(id) {
         });
 }
 // Excel-Datei importieren
-// Excel-Datei importieren
 function excelImportieren(e) {
     const datei = e.target.files[0];
 
@@ -330,20 +329,20 @@ function excelImportieren(e) {
 
     leser.onload = function(event) {
         try {
-            const arbeitsmappe = XLSX.read(
+            excelArbeitsmappe = XLSX.read(
                 event.target.result,
                 { type: "array" }
             );
 
-            const tabellenName = arbeitsmappe.SheetNames[0];
+            excelTabellenName = excelArbeitsmappe.SheetNames[0];
 
-            if (!tabellenName) {
+            if (!excelTabellenName) {
                 alert("Kein Tabellenblatt gefunden.");
                 return;
             }
 
             const tabelle = XLSX.utils.sheet_to_json(
-                arbeitsmappe.Sheets[tabellenName],
+                excelArbeitsmappe.Sheets[excelTabellenName],
                 {
                     header: 1,
                     defval: "",
@@ -359,6 +358,7 @@ function excelImportieren(e) {
                     adresse: String(zeile[1] || "").trim(),
                     etablissement: String(zeile[2] || "").trim(),
                     gebaeude: String(zeile[3] || "").trim(),
+                    kontrollen: String(zeile[4] || ""),
                     kontakt: String(zeile[5] || "").trim(),
                     bemerkung: String(zeile[6] || "").trim()
                 }))
@@ -367,6 +367,7 @@ function excelImportieren(e) {
                     studio.adresse ||
                     studio.etablissement ||
                     studio.gebaeude ||
+                    studio.kontrollen ||
                     studio.kontakt ||
                     studio.bemerkung
                 );
@@ -401,6 +402,9 @@ function excelImportieren(e) {
     leser.onerror = function() {
         alert("Die Datei konnte nicht geöffnet werden.");
     };
+
+    leser.readAsArrayBuffer(datei);
+}
 
     leser.readAsArrayBuffer(datei);
 }
