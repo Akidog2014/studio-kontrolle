@@ -280,6 +280,11 @@ function kontrolleErfassen(id) {
 
             kontrollHistorie[id].push(k);
 
+            localStorage.setItem(
+    SPEICHER_SCHLUESSEL,
+    JSON.stringify(kontrollHistorie)
+);
+
             studioAnzeigen(id);
         });
 }
