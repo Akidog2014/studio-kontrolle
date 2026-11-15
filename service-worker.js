@@ -1,4 +1,4 @@
-const CACHE_NAME = "studio-kontrolle-v1";
+const CACHE_NAME = "studio-kontrolle-v2";
 
 const DATEIEN = [
     "./",
