@@ -1,0 +1,11 @@
+{
+  "name": "Studio-Kontrolle",
+  "short_name": "Studio-Kontrolle",
+  "description": "Mobile Kontrollverwaltung",
+  "lang": "de-CH",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f2f5f8",
+  "theme_color": "#18324b"
+}
