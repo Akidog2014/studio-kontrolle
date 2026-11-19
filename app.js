@@ -464,10 +464,16 @@ const neuesArbeitsblatt =
 
         if (nichtExportiert.length === 0) return;
 
-        const zellenAdresse = XLSX.utils.encode_cell({
-            r: index + 1,
-            c: 4
-        });
+const studioIndex = studios.findIndex(
+    s => s.id === studio.id
+);
+
+if (studioIndex === -1) return;
+
+const zellenAdresse = XLSX.utils.encode_cell({
+    r: studioIndex + 1,
+    c: 4
+});
 
         const zelle = neuesArbeitsblatt[zellenAdresse] || {};
         const alteKontrollen = String(zelle.v || "");
