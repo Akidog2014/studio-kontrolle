@@ -411,6 +411,7 @@ function excelImportieren(e) {
 }
 
 // Kontrollen in die importierte Original-Excel-Datei schreiben
+
 function kontrollenExportieren() {
     if (!window.XLSX) {
         alert("Die Excel-Bibliothek wurde nicht geladen.");
@@ -425,126 +426,108 @@ function kontrollenExportieren() {
     const arbeitsblatt =
         excelArbeitsmappe.Sheets[excelTabellenName];
 
-studios.forEach(studio => {
-    const alteKontrollen = studio.kontrollen || "";
-    const neueKontrollen = kontrollHistorie[studio.id] || [];
-
-    if (neueKontrollen.length === 0) {
+    if (!arbeitsblatt) {
+        alert("Das Excel-Tabellenblatt wurde nicht gefunden.");
         return;
     }
 
-    const sortiert = neueKontrollen
-        .filter(k => k.exportiert !== true)
-        .sort((a, b) =>
-            b.zeitpunkt.localeCompare(a.zeitpunkt)
+    const neueArbeitsmappe = XLSX.utils.book_new();
+
+    const neuesArbeitsblatt = XLSX.utils.aoa_to_sheet(
+        XLSX.utils.sheet_to_json(arbeitsblatt, {
+            header: 1,
+            defval: "",
+            raw: false
+        })
+    );
+
+    // Vorhandene Excel-Daten übernehmen
+    const bereich = XLSX.utils.decode_range(
+        neuesArbeitsblatt["!ref"]
+    );
+
+    let anzahlExportiert = 0;
+
+    studios.forEach((studio, index) => {
+        const kontrollen = kontrollHistorie[studio.id] || [];
+
+        const nichtExportiert = kontrollen.filter(
+            k => k.exportiert !== true
         );
-        const neueEintraege = sortiert.map(k => {
-            const werte = {};
 
-            String(k.feststellungen || "")
-                .split("|")
-                .forEach(teil => {
-                    const treffer = teil.trim().match(/^(.+?):\s*(\d+)$/);
-
-                    if (treffer) {
-                        werte[treffer[1].trim()] = Number(treffer[2]);
-                    }
-                });
-
-            const feststellungen = [];
-
-            const kategorien = [
-                ["Meldeverstoss", "Meldeverstoss"],
-                ["Festnahme", "Festnahme"],
-                ["RIPOL-Ausschreibung", "RIPOL-Ausschreibung"],
-                ["Bericht allgemein", "Bericht allgemein"],
-                ["Aufenthaltsnachforschung", "Aufenthaltsnachforschung"]
-            ];
-
-            kategorien.forEach(([name, beschriftung]) => {
-                const anzahl = werte[name] || 0;
-
-                if (anzahl > 0) {
-                    feststellungen.push(
-                        anzahl + "x " + beschriftung
-                    );
-                }
-            });
-
-            if (k.weitere) {
-                feststellungen.push(k.weitere);
-            }
-
-            const beschreibung = feststellungen.length > 0
-                ? feststellungen.join(", ")
-                : "alles in Ordnung";
-
-            const datum = k.datum
-                ? k.datum.split("-").reverse().join(".")
-                : "";
-
-            return `${datum}, ${k.uhrzeit} Uhr, ${k.personen} Personen kontrolliert, ${beschreibung}`;
-        });
-
-        const alleKontrollen = [
-            ...neueEintraege,
-            alteKontrollen
-        ]
-            .filter(eintrag => eintrag && eintrag.trim() !== "")
-            .join("\n");
+        if (nichtExportiert.length === 0) return;
 
         const zellenAdresse = XLSX.utils.encode_cell({
             r: index + 1,
             c: 4
         });
 
-        const zelle = arbeitsblatt[zellenAdresse] || {};
+        const zelle = neuesArbeitsblatt[zellenAdresse] || {};
+        const alteKontrollen = String(zelle.v || "");
+
+        const neueEintraege = nichtExportiert
+            .sort((a, b) =>
+                a.zeitpunkt.localeCompare(b.zeitpunkt)
+            )
+            .map(k => {
+                const datum = k.datum
+                    ? k.datum.split("-").reverse().join(".")
+                    : "";
+
+                return [
+                    datum,
+                    k.uhrzeit + " Uhr",
+                    k.mitarbeiter,
+                    k.personen + " Personen kontrolliert",
+                    k.feststellungen,
+                    k.weitere || ""
+                ].filter(Boolean).join(", ");
+            });
+
         zelle.t = "s";
-        zelle.v = alleKontrollen;
-        arbeitsblatt[zellenAdresse] = zelle;
+        zelle.v = [
+            alteKontrollen,
+            ...neueEintraege
+        ].filter(Boolean).join("\n");
+
+        neuesArbeitsblatt[zellenAdresse] = zelle;
+
+        anzahlExportiert += nichtExportiert.length;
     });
 
-try {
-const jetzt = new Date();
+    // Arbeitsmappe erstellen
+    XLSX.utils.book_append_sheet(
+        neueArbeitsmappe,
+        neuesArbeitsblatt,
+        excelTabellenName
+    );
 
-const zeitstempel =
-    jetzt.getFullYear() + "-" +
-    String(jetzt.getMonth() + 1).padStart(2, "0") + "-" +
-    String(jetzt.getDate()).padStart(2, "0") + "-" +
-    String(jetzt.getHours()).padStart(2, "0") +
-    String(jetzt.getMinutes()).padStart(2, "0");
+    const jetzt = new Date();
 
-const dateiname =
-    "Studio-Kontrolle-Export-" + zeitstempel + ".xlsx";
+    const zeitstempel =
+        jetzt.getFullYear() + "-" +
+        String(jetzt.getMonth() + 1).padStart(2, "0") + "-" +
+        String(jetzt.getDate()).padStart(2, "0") + "-" +
+        String(jetzt.getHours()).padStart(2, "0") +
+        String(jetzt.getMinutes()).padStart(2, "0");
 
-XLSX.writeFile(
-    excelArbeitsmappe,
-    dateiname
-);
-} catch (fehler) {
-    alert("Export fehlgeschlagen. Kontrollen wurden nicht markiert.");
-    console.error(fehler);
-    return;
+    const dateiname =
+        "Studio-Kontrolle-Export-" + zeitstempel + ".xlsx";
+
+    try {
+        XLSX.writeFile(neueArbeitsmappe, dateiname);
+    } catch (fehler) {
+        alert("Export fehlgeschlagen.");
+        console.error(fehler);
+        return;
+    }
+
+    alert(
+        anzahlExportiert +
+        " Kontrollen wurden für den Export vorbereitet."
+    );
 }
 
-// Exportierte Kontrollen markieren
-studios.forEach(studio => {
-    const kontrollen = kontrollHistorie[studio.id] || [];
-
-    kontrollen.forEach(k => {
-        if (k.exportiert !== true) {
-            k.exportiert = true;
-        }
-    });
-});
-
-localStorage.setItem(
-    SPEICHER_SCHLUESSEL,
-    JSON.stringify(kontrollHistorie)
-);
-
-alert("Die aktualisierte Excel-Datei wurde erstellt.");
-}
 // Dynamische Texte sicher anzeigen
 function sicher(text) {
     return String(text ?? "").replace(/[&<>"']/g, zeichen => ({
