@@ -448,6 +448,8 @@ function kontrollenExportieren() {
 
     let anzahlExportiert = 0;
 
+    const exportierteKontrollen = [];
+
     studios.forEach((studio, index) => {
         const kontrollen = kontrollHistorie[studio.id] || [];
 
@@ -493,6 +495,7 @@ function kontrollenExportieren() {
         neuesArbeitsblatt[zellenAdresse] = zelle;
 
         anzahlExportiert += nichtExportiert.length;
+        exportierteKontrollen.push(...nichtExportiert);
     });
 
     // Arbeitsmappe erstellen
@@ -522,11 +525,44 @@ function kontrollenExportieren() {
         return;
     }
 
-    alert(
-        anzahlExportiert +
-        " Kontrollen wurden für den Export vorbereitet."
-    );
+if (exportierteKontrollen.length === 0) {
+    alert("Es gibt keine neuen Kontrollen zum Exportieren.");
+    return;
 }
+
+alert(
+    anzahlExportiert +
+    " Kontrollen wurden exportiert."
+);
+
+exportBestaetigen(exportierteKontrollen);
+}
+
+
+function exportBestaetigen(exportierteKontrollen) {
+    const bestaetigt = confirm(
+        "Wurde die Excel-Datei erfolgreich heruntergeladen?\n\n" +
+        "Möchtest du " + exportierteKontrollen.length +
+        " Kontrollen als exportiert markieren?"
+    );
+
+    if (!bestaetigt) {
+        alert("Die Kontrollen bleiben als nicht exportiert gespeichert.");
+        return;
+    }
+
+    exportierteKontrollen.forEach(k => {
+        k.exportiert = true;
+    });
+
+    localStorage.setItem(
+        SPEICHER_SCHLUESSEL,
+        JSON.stringify(kontrollHistorie)
+    );
+
+    alert("Die Kontrollen wurden als exportiert markiert.");
+}
+
 
 // Dynamische Texte sicher anzeigen
 function sicher(text) {
