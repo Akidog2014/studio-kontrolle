@@ -523,6 +523,11 @@ const zellenAdresse = XLSX.utils.encode_cell({
     const dateiname =
         "Studio-Kontrolle-Export-" + zeitstempel + ".xlsx";
 
+if (exportierteKontrollen.length === 0) {
+    alert("Es gibt keine neuen Kontrollen zum Exportieren.");
+    return;
+}
+
     try {
         XLSX.writeFile(neueArbeitsmappe, dateiname);
     } catch (fehler) {
@@ -530,12 +535,7 @@ const zellenAdresse = XLSX.utils.encode_cell({
         console.error(fehler);
         return;
     }
-
-if (exportierteKontrollen.length === 0) {
-    alert("Es gibt keine neuen Kontrollen zum Exportieren.");
-    return;
-}
-
+    
 alert(
     anzahlExportiert +
     " Kontrollen wurden exportiert."
