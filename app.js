@@ -292,13 +292,15 @@ function kontrolleErfassen(id) {
                 document.getElementById("weitere").value.trim();
 
             const k = {
+                id: crypto.randomUUID(),
                 zeitpunkt,
                 datum: zeitpunkt.slice(0, 10),
                 uhrzeit: zeitpunkt.slice(11, 16),
                 mitarbeiter,
                 personen: document.getElementById("personen").value,
                 feststellungen,
-                weitere
+                weitere,
+                exportiert: false
             };
 
             if (weitere) {
@@ -353,7 +355,9 @@ function excelImportieren(e) {
             const importierteStudios = tabelle
                 .slice(1)
                 .map((zeile, index) => ({
-                    id: "excel-" + (index + 2),
+                    id: "excel-" + (index + 2) + "-" +
+                    String(zeile[0] || "").trim() + "-" +
+                    String(zeile[1] || "").trim(),
                     ort: String(zeile[0] || "").trim(),
                     adresse: String(zeile[1] || "").trim(),
                     etablissement: String(zeile[2] || "").trim(),
@@ -406,8 +410,6 @@ function excelImportieren(e) {
     leser.readAsArrayBuffer(datei);
 }
 
-    leser.readAsArrayBuffer(datei);
-}
 // Kontrollen in die importierte Original-Excel-Datei schreiben
 function kontrollenExportieren() {
     if (!window.XLSX) {
@@ -423,14 +425,19 @@ function kontrollenExportieren() {
     const arbeitsblatt =
         excelArbeitsmappe.Sheets[excelTabellenName];
 
-    studios.forEach((studio, index) => {
-        const alteKontrollen = studio.kontrollen || "";
-        const neueKontrollen = kontrollHistorie[studio.id] || [];
+studios.forEach(studio => {
+    const alteKontrollen = studio.kontrollen || "";
+    const neueKontrollen = kontrollHistorie[studio.id] || [];
 
-        const sortiert = [...neueKontrollen].sort((a, b) =>
+    if (neueKontrollen.length === 0) {
+        return;
+    }
+
+    const sortiert = neueKontrollen
+        .filter(k => k.exportiert !== true)
+        .sort((a, b) =>
             b.zeitpunkt.localeCompare(a.zeitpunkt)
         );
-
         const neueEintraege = sortiert.map(k => {
             const werte = {};
 
@@ -497,12 +504,46 @@ function kontrollenExportieren() {
         arbeitsblatt[zellenAdresse] = zelle;
     });
 
-    XLSX.writeFile(
-        excelArbeitsmappe,
-        "Studio-Kontrolle-aktualisiert.xlsx"
-    );
+try {
+const jetzt = new Date();
 
-    alert("Die aktualisierte Excel-Datei wurde erstellt.");
+const zeitstempel =
+    jetzt.getFullYear() + "-" +
+    String(jetzt.getMonth() + 1).padStart(2, "0") + "-" +
+    String(jetzt.getDate()).padStart(2, "0") + "-" +
+    String(jetzt.getHours()).padStart(2, "0") +
+    String(jetzt.getMinutes()).padStart(2, "0");
+
+const dateiname =
+    "Studio-Kontrolle-Export-" + zeitstempel + ".xlsx";
+
+XLSX.writeFile(
+    excelArbeitsmappe,
+    dateiname
+);
+} catch (fehler) {
+    alert("Export fehlgeschlagen. Kontrollen wurden nicht markiert.");
+    console.error(fehler);
+    return;
+}
+
+// Exportierte Kontrollen markieren
+studios.forEach(studio => {
+    const kontrollen = kontrollHistorie[studio.id] || [];
+
+    kontrollen.forEach(k => {
+        if (k.exportiert !== true) {
+            k.exportiert = true;
+        }
+    });
+});
+
+localStorage.setItem(
+    SPEICHER_SCHLUESSEL,
+    JSON.stringify(kontrollHistorie)
+);
+
+alert("Die aktualisierte Excel-Datei wurde erstellt.");
 }
 // Dynamische Texte sicher anzeigen
 function sicher(text) {
