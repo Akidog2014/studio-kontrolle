@@ -431,15 +431,18 @@ function kontrollenExportieren() {
         return;
     }
 
-    const neueArbeitsmappe = XLSX.utils.book_new();
+const neueArbeitsmappe = XLSX.read(
+    XLSX.write(excelArbeitsmappe, {
+        bookType: "xlsx",
+        type: "array"
+    }),
+    {
+        type: "array"
+    }
+);
 
-    const neuesArbeitsblatt = XLSX.utils.aoa_to_sheet(
-        XLSX.utils.sheet_to_json(arbeitsblatt, {
-            header: 1,
-            defval: "",
-            raw: false
-        })
-    );
+const neuesArbeitsblatt =
+    neueArbeitsmappe.Sheets[excelTabellenName];
 
     // Vorhandene Excel-Daten übernehmen
     const bereich = XLSX.utils.decode_range(
@@ -499,11 +502,6 @@ function kontrollenExportieren() {
     });
 
     // Arbeitsmappe erstellen
-    XLSX.utils.book_append_sheet(
-        neueArbeitsmappe,
-        neuesArbeitsblatt,
-        excelTabellenName
-    );
 
     const jetzt = new Date();
 
