@@ -337,6 +337,8 @@ function excelImportieren(e) {
             );
 
             excelTabellenName = excelArbeitsmappe.SheetNames[0];
+            console.log("Excel-Arbeitsmappe:", excelArbeitsmappe);
+            console.log("Excel-Tabellenname:", excelTabellenName);
 
             if (!excelTabellenName) {
                 alert("Kein Tabellenblatt gefunden.");
