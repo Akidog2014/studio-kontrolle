@@ -371,13 +371,17 @@ function excelImportieren(e) {
                 const studiosAusTabelle = tabelle
                     .slice(1)
                     .map((zeile, index) => ({
-                        id: "excel-" + tabellenName + "-" +
-                            (index + 2) + "-" +
-                            String(zeile[0] || "").trim() + "-" +
-                            String(zeile[1] || "").trim(),
+id: "excel-" +
+    (tabellenName === excelArbeitsmappe.SheetNames[0]
+        ? ""
+        : tabellenName + "-") +
+    (index + 2) + "-" +
+    String(zeile[0] || "").trim() + "-" +
+    String(zeile[1] || "").trim(),
 
                         excelTabellenName: tabellenName,
-
+                        excelZeile: index + 2,
+                        
                         ort: String(zeile[0] || "").trim(),
                         adresse: String(zeile[1] || "").trim(),
                         etablissement: String(zeile[2] || "").trim(),
@@ -490,8 +494,10 @@ const neueArbeitsmappe = new ExcelJS.Workbook();
 
 await neueArbeitsmappe.xlsx.load(excelDateiDaten);
 
-const neuesArbeitsblatt =
-    neueArbeitsmappe.getWorksheet(excelTabellenName);
+if (studios.length === 0) {
+    alert("Es wurden keine Studios importiert.");
+    return;
+}
 
 let idArbeitsblatt =
     neueArbeitsmappe.getWorksheet("_KontrollIDs");
@@ -511,10 +517,6 @@ if (!idArbeitsblatt) {
     ]);
 }
 
-if (!neuesArbeitsblatt) {
-    alert("Das Excel-Tabellenblatt wurde nicht gefunden.");
-    return;
-}
     let anzahlExportiert = 0;
 
     const exportierteKontrollen = [];
@@ -528,14 +530,31 @@ if (!neuesArbeitsblatt) {
 
         if (nichtExportiert.length === 0) return;
 
-const studioIndex = studios.findIndex(
-    s => s.id === studio.id
-);
+const neuesArbeitsblatt =
+    neueArbeitsmappe.getWorksheet(studio.excelTabellenName);
 
-if (studioIndex === -1) return;
+if (!neuesArbeitsblatt) {
+    alert(
+        "Das Tabellenblatt " +
+        studio.excelTabellenName +
+        " wurde nicht gefunden."
+    );
+    return;
+}
+       
+const excelZeile = studio.excelZeile;
+
+if (!excelZeile) {
+    alert(
+        "Die Excel-Zeilennummer für " +
+        studio.etablissement +
+        " wurde nicht gefunden."
+    );
+    return;
+}
 
 const zelle = neuesArbeitsblatt.getCell(
-    studioIndex + 2,
+    excelZeile,
     5
 );
 
@@ -558,13 +577,13 @@ zelle.value = [
 nichtExportiert.forEach(k => {
     const kontrolltext = kontrolltextErstellen(k);
 
-    idArbeitsblatt.addRow([
-        k.id,
-        studioIndex + 2,
-        k.datum || "",
-        k.mitarbeiter || "",
-        kontrolltext
-    ]);
+idArbeitsblatt.addRow([
+    k.id,
+    excelZeile,
+    k.datum || "",
+    k.mitarbeiter || "",
+    kontrolltext
+]);
 });
 
 });
