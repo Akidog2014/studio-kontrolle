@@ -507,14 +507,15 @@ if (!idArbeitsblatt) {
         neueArbeitsmappe.addWorksheet("_KontrollIDs");
 
     idArbeitsblatt.state = "veryHidden";
-
-    idArbeitsblatt.addRow([
-        "Kontroll-ID",
-        "Excel-Zeile",
-        "Kontrolldatum",
-        "Mitarbeiter",
-        "Kontrolltext"
-    ]);
+    
+idArbeitsblatt.addRow([
+    "Kontroll-ID",
+    "Excel-Zeile",
+    "Kontrolldatum",
+    "Mitarbeiter",
+    "Kontrolltext",
+    "Excel-Tabellenblatt"
+]);
 }
 
     let anzahlExportiert = 0;
@@ -582,7 +583,8 @@ idArbeitsblatt.addRow([
     excelZeile,
     k.datum || "",
     k.mitarbeiter || "",
-    kontrolltext
+    kontrolltext,
+    studio.excelTabellenName
 ]);
 });
 
@@ -721,7 +723,6 @@ async function kontrollenZusammenfuehren() {
 
             const masterEintrag = masterDateien[0];
             const master = masterEintrag.arbeitsmappe;
-            const masterBlatt = master.worksheets[0];
 
             if (!masterBlatt) {
                 throw new Error("Die Masterdatei enthält kein Tabellenblatt.");
@@ -733,13 +734,14 @@ async function kontrollenZusammenfuehren() {
                 masterIDs = master.addWorksheet("_KontrollIDs");
                 masterIDs.state = "veryHidden";
 
-                masterIDs.addRow([
-                    "Kontroll-ID",
-                    "Excel-Zeile",
-                    "Kontrolldatum",
-                    "Mitarbeiter",
-                    "Kontrolltext"
-                ]);
+masterIDs.addRow([
+    "Kontroll-ID",
+    "Excel-Zeile",
+    "Kontrolldatum",
+    "Mitarbeiter",
+    "Kontrolltext",
+    "Excel-Tabellenblatt"
+]);
             }
 
             const vorhandeneIDs = new Set();
@@ -759,10 +761,11 @@ async function kontrollenZusammenfuehren() {
 
                 exportIDs.eachRow((zeile, nummer) => {
                     if (nummer === 1) return;
-
-                    const id = String(zeile.getCell(1).value || "");
-                    const excelZeile = Number(zeile.getCell(2).value);
-                    const kontrolltext = zeile.getCell(5).value;
+                    
+const id = String(zeile.getCell(1).value || "");
+const excelZeile = Number(zeile.getCell(2).value);
+const kontrolltext = zeile.getCell(5).value;
+const excelTabellenName = String(zeile.getCell(6).value || "");
 
                     if (!id || !excelZeile || !kontrolltext) return;
 
@@ -771,7 +774,16 @@ async function kontrollenZusammenfuehren() {
                         return;
                     }
 
-                    const zielzelle = masterBlatt.getCell(excelZeile, 5);
+                    const masterBlatt = master.getWorksheet(excelTabellenName);
+
+                    if (!masterBlatt) {
+                    throw new Error(
+                        "Das Tabellenblatt " + excelTabellenName +
+                        " wurde in der Masterdatei nicht gefunden."
+                    );
+                }
+
+const zielzelle = masterBlatt.getCell(excelZeile, 5);
 
                     const bisherigerInhalt =
                         zielzelle.value == null
@@ -783,13 +795,14 @@ async function kontrollenZusammenfuehren() {
                         String(kontrolltext)
                     ].filter(Boolean).join("\n");
 
-                    masterIDs.addRow([
-                        id,
-                        excelZeile,
-                        zeile.getCell(3).value,
-                        zeile.getCell(4).value,
-                        kontrolltext
-                    ]);
+masterIDs.addRow([
+    id,
+    excelZeile,
+    zeile.getCell(3).value,
+    zeile.getCell(4).value,
+    kontrolltext,
+    excelTabellenName
+]);
 
                     vorhandeneIDs.add(id);
                     hinzugefuegt++;
