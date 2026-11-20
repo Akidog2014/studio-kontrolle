@@ -645,14 +645,13 @@ async function kontrollenZusammenfuehren() {
 
     dateiAuswahl.addEventListener("change", async function() {
         const dateien = Array.from(dateiAuswahl.files);
+        
+    if (dateien.length !== 3) {
+        alert("Bitte die Masterdatei und beide Exportdateien auswählen.");
+        return;
+    }
 
-        if (dateien.length !== 2) {
-            alert("Bitte genau zwei Excel-Dateien auswählen.");
-            return;
-        }
-
-        try {
-            let ergebnis = "";
+                    const geladeneDateien = [];
 
             for (const datei of dateien) {
                 const dateiDaten = await datei.arrayBuffer();
@@ -663,12 +662,36 @@ async function kontrollenZusammenfuehren() {
                 const idArbeitsblatt =
                     arbeitsmappe.getWorksheet("_KontrollIDs");
 
-                if (!idArbeitsblatt) {
-                    throw new Error(
-                        "Das Tabellenblatt _KontrollIDs fehlt in " +
-                        datei.name
-                    );
-                }
+                geladeneDateien.push({
+                    name: datei.name,
+                    arbeitsmappe: arbeitsmappe,
+                    istExport: !!idArbeitsblatt
+                });
+            }
+
+            const masterDateien = geladeneDateien.filter(
+                d => !d.istExport
+            );
+
+            const exportDateien = geladeneDateien.filter(
+                d => d.istExport
+            );
+
+            if (
+                masterDateien.length !== 1 ||
+                exportDateien.length !== 2
+            ) {
+                throw new Error(
+                    "Es muss genau eine Masterdatei und zwei Exportdateien geben."
+                );
+            }
+
+            alert(
+                "Dateien erfolgreich erkannt:\n\n" +
+                "Masterdatei: " + masterDateien[0].name + "\n" +
+                "Exportdatei 1: " + exportDateien[0].name + "\n" +
+                "Exportdatei 2: " + exportDateien[1].name
+            );
 
                 let anzahlIDs = 0;
 
