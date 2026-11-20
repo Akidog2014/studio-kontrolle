@@ -651,21 +651,45 @@ async function kontrollenZusammenfuehren() {
         }
 
         try {
+            let ergebnis = "";
+
             for (const datei of dateien) {
                 const dateiDaten = await datei.arrayBuffer();
 
                 const arbeitsmappe = new ExcelJS.Workbook();
                 await arbeitsmappe.xlsx.load(dateiDaten);
 
-                if (arbeitsmappe.worksheets.length === 0) {
-                    throw new Error("Keine Tabellenblätter gefunden.");
+                const idArbeitsblatt =
+                    arbeitsmappe.getWorksheet("_KontrollIDs");
+
+                if (!idArbeitsblatt) {
+                    throw new Error(
+                        "Das Tabellenblatt _KontrollIDs fehlt in " +
+                        datei.name
+                    );
                 }
+
+                let anzahlIDs = 0;
+
+                idArbeitsblatt.eachRow(function(zeile, zeilenNummer) {
+                    if (
+                        zeilenNummer > 1 &&
+                        zeile.getCell(1).value
+                    ) {
+                        anzahlIDs++;
+                    }
+                });
+
+                ergebnis +=
+                    datei.name + ": " +
+                    anzahlIDs + " Kontroll-IDs gefunden\n";
             }
 
-            alert("Beide Excel-Dateien wurden erfolgreich eingelesen.");
+            alert(ergebnis);
+
         } catch (fehler) {
             console.error(fehler);
-            alert("Fehler beim Einlesen der Excel-Dateien.");
+            alert("Fehler: " + fehler.message);
         }
     });
 
