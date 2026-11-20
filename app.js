@@ -114,6 +114,8 @@ app.innerHTML = `
         .addEventListener("change", excelImportieren);
     document.getElementById("export")
         .addEventListener("click", kontrollenExportieren);
+    document.getElementById("zusammenfuehren")
+    .addEventListener("click", kontrollenZusammenfuehren);
 }
 
 // Suche nach Studios
@@ -592,6 +594,10 @@ function sicher(text) {
         '"': "&quot;",
         "'": "&#39;"
     })[zeichen]);
+}
+
+function kontrollenZusammenfuehren() {
+    alert("Die Funktion zum Zusammenführen wird eingerichtet.");
 }
 
 // Anwendung starten
