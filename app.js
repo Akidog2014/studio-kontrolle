@@ -448,6 +448,24 @@ await neueArbeitsmappe.xlsx.load(excelDateiDaten);
 const neuesArbeitsblatt =
     neueArbeitsmappe.getWorksheet(excelTabellenName);
 
+let idArbeitsblatt =
+    neueArbeitsmappe.getWorksheet("_KontrollIDs");
+
+if (!idArbeitsblatt) {
+    idArbeitsblatt =
+        neueArbeitsmappe.addWorksheet("_KontrollIDs");
+
+    idArbeitsblatt.state = "veryHidden";
+
+    idArbeitsblatt.addRow([
+        "Kontroll-ID",
+        "Excel-Zeile",
+        "Kontrolldatum",
+        "Mitarbeiter",
+        "Kontrolltext"
+    ]);
+}
+
 if (!neuesArbeitsblatt) {
     alert("Das Excel-Tabellenblatt wurde nicht gefunden.");
     return;
@@ -505,7 +523,28 @@ zelle.value = [
 
         anzahlExportiert += nichtExportiert.length;
         exportierteKontrollen.push(...nichtExportiert);
-    });
+nichtExportiert.forEach(k => {
+    const datum = k.datum
+        ? k.datum.split("-").reverse().join(".")
+        : "";
+
+    const kontrolltext = [
+        datum,
+        k.uhrzeit + " Uhr",
+        k.mitarbeiter,
+        k.personen + " Personen kontrolliert",
+        k.feststellungen,
+        k.weitere || ""
+    ].filter(Boolean).join(", ");
+
+    idArbeitsblatt.addRow([
+        k.id,
+        studioIndex + 2,
+        k.datum || "",
+        k.mitarbeiter || "",
+        kontrolltext
+    ]);
+});
 
     // Arbeitsmappe erstellen
 
