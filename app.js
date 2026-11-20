@@ -355,14 +355,18 @@ function excelImportieren(e) {
 
             excelArbeitsmappe.SheetNames.forEach(tabellenName => {
 
-                const tabelle = XLSX.utils.sheet_to_json(
-                    excelArbeitsmappe.Sheets[tabellenName],
-                    {
-                        header: 1,
-                        defval: "",
-                        raw: false
-                    }
-                );
+    if (tabellenName === "_KontrollIDs") {
+        return;
+    }
+
+    const tabelle = XLSX.utils.sheet_to_json(
+        excelArbeitsmappe.Sheets[tabellenName],
+        {
+            header: 1,
+            defval: "",
+            raw: false
+        }
+    );
 
                 const studiosAusTabelle = tabelle
                     .slice(1)
