@@ -511,18 +511,7 @@ zelle.value = [
         anzahlExportiert += nichtExportiert.length;
         exportierteKontrollen.push(...nichtExportiert);
 nichtExportiert.forEach(k => {
-    const datum = k.datum
-        ? k.datum.split("-").reverse().join(".")
-        : "";
-
-    const kontrolltext = [
-        datum,
-        k.uhrzeit + " Uhr",
-        k.mitarbeiter,
-        k.personen + " Personen kontrolliert",
-        k.feststellungen,
-        k.weitere || ""
-    ].filter(Boolean).join(", ");
+    const kontrolltext = kontrolltextErstellen(k);
 
     idArbeitsblatt.addRow([
         k.id,
