@@ -419,18 +419,32 @@ function excelImportieren(e) {
 // Kontrollen in die importierte Original-Excel-Datei schreiben
 
 async function kontrollenExportieren() {
-    if (!window.XLSX) {
-        alert("Die Excel-Bibliothek wurde nicht geladen.");
-        return;
-    }
+if (!window.XLSX || typeof ExcelJS === "undefined") {
+    alert("Eine benötigte Excel-Bibliothek wurde nicht geladen.");
+    return;
+}
+
+if (!excelDateiDaten) {
+    alert("Bitte zuerst die Excel-Datei importieren.");
+    return;
+}
 
     if (!excelArbeitsmappe || !excelTabellenName) {
         alert("Bitte zuerst die Excel-Datei importieren.");
         return;
     }
 
-    const arbeitsblatt =
-        excelArbeitsmappe.Sheets[excelTabellenName];
+const neueArbeitsmappe = new ExcelJS.Workbook();
+
+await neueArbeitsmappe.xlsx.load(excelDateiDaten);
+
+const neuesArbeitsblatt =
+    neueArbeitsmappe.getWorksheet(excelTabellenName);
+
+if (!neuesArbeitsblatt) {
+    alert("Das Excel-Tabellenblatt wurde nicht gefunden.");
+    return;
+}
 
     if (!arbeitsblatt) {
         alert("Das Excel-Tabellenblatt wurde nicht gefunden.");
@@ -474,13 +488,13 @@ const studioIndex = studios.findIndex(
 
 if (studioIndex === -1) return;
 
-const zellenAdresse = XLSX.utils.encode_cell({
-    r: studioIndex + 1,
-    c: 4
-});
+const zelle = neuesArbeitsblatt.getCell(
+    studioIndex + 2,
+    5
+);
 
-        const zelle = neuesArbeitsblatt[zellenAdresse] || {};
-        const alteKontrollen = String(zelle.v || "");
+const alteKontrollen =
+    zelle.value == null ? "" : String(zelle.value);
 
         const neueEintraege = nichtExportiert
             .sort((a, b) =>
@@ -501,13 +515,10 @@ const zellenAdresse = XLSX.utils.encode_cell({
                 ].filter(Boolean).join(", ");
             });
 
-        zelle.t = "s";
-        zelle.v = [
-            alteKontrollen,
-            ...neueEintraege
-        ].filter(Boolean).join("\n");
-
-        neuesArbeitsblatt[zellenAdresse] = zelle;
+zelle.value = [
+    alteKontrollen,
+    ...neueEintraege
+].filter(Boolean).join("\n");
 
         anzahlExportiert += nichtExportiert.length;
         exportierteKontrollen.push(...nichtExportiert);
@@ -532,13 +543,30 @@ if (exportierteKontrollen.length === 0) {
     return;
 }
 
-    try {
-        XLSX.writeFile(neueArbeitsmappe, dateiname);
-    } catch (fehler) {
-        alert("Export fehlgeschlagen.");
-        console.error(fehler);
-        return;
-    }
+try {
+    const buffer = await neueArbeitsmappe.xlsx.writeBuffer();
+
+    const blob = new Blob([buffer], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    });
+
+    const url = URL.createObjectURL(blob);
+
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = dateiname;
+
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+
+} catch (fehler) {
+    alert("Export fehlgeschlagen.");
+    console.error(fehler);
+    return;
+}
     
 alert(
     anzahlExportiert +
