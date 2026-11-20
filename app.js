@@ -424,6 +424,39 @@ function excelImportieren(e) {
 }
 
 // Kontrollen in die importierte Original-Excel-Datei schreiben
+function kontrolltextErstellen(k) {
+    const datum = k.datum
+        ? k.datum.split("-").reverse().join(".")
+        : "";
+
+    const basis =
+        datum + ", " +
+        k.uhrzeit + " Uhr, " +
+        k.mitarbeiter + ": " +
+        k.personen + " Personen kontrolliert";
+
+    const feststellungen = String(k.feststellungen || "")
+        .split("|")
+        .map(eintrag => eintrag.trim())
+        .filter(eintrag => {
+            if (eintrag.startsWith("Weitere:")) {
+                return false;
+            }
+
+            const treffer = eintrag.match(/^(.+?):\s*(\d+)$/);
+
+            return treffer && Number(treffer[2]) > 0;
+        });
+
+    if (k.weitere && k.weitere.trim()) {
+        feststellungen.push("Weitere: " + k.weitere.trim());
+    }
+
+    return [
+        basis,
+        ...feststellungen
+    ].join(", ");
+}
 
 async function kontrollenExportieren() {
 if (!window.XLSX || typeof ExcelJS === "undefined") {
