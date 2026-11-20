@@ -95,6 +95,11 @@ app.innerHTML = `
         <button id="export">
             Kontrollen exportieren
         </button>
+
+        <button id="zusammenfuehren">
+            Kontrollen zusammenführen
+        </button>
+
     </section>
 `;
 
