@@ -596,32 +596,41 @@ function sicher(text) {
     })[zeichen]);
 }
 
-function kontrollenZusammenfuehren() {
+async function kontrollenZusammenfuehren() {
     const dateiAuswahl = document.createElement("input");
 
     dateiAuswahl.type = "file";
     dateiAuswahl.accept = ".xlsx";
     dateiAuswahl.multiple = true;
 
-    dateiAuswahl.addEventListener("change", function() {
+    dateiAuswahl.addEventListener("change", async function() {
         const dateien = Array.from(dateiAuswahl.files);
-
-        if (dateien.length === 0) return;
 
         if (dateien.length !== 2) {
             alert("Bitte genau zwei Excel-Dateien auswählen.");
             return;
         }
 
-        alert(
-            "Ausgewählt:\n" +
-            dateien[0].name + "\n" +
-            dateien[1].name
-        );
+        try {
+            for (const datei of dateien) {
+                const dateiDaten = await datei.arrayBuffer();
+
+                const arbeitsmappe = new ExcelJS.Workbook();
+                await arbeitsmappe.xlsx.load(dateiDaten);
+
+                if (arbeitsmappe.worksheets.length === 0) {
+                    throw new Error("Keine Tabellenblätter gefunden.");
+                }
+            }
+
+            alert("Beide Excel-Dateien wurden erfolgreich eingelesen.");
+        } catch (fehler) {
+            console.error(fehler);
+            alert("Fehler beim Einlesen der Excel-Dateien.");
+        }
     });
 
     dateiAuswahl.click();
 }
-
 // Anwendung starten
 startseite();
