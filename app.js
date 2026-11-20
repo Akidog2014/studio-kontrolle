@@ -451,16 +451,6 @@ if (!neuesArbeitsblatt) {
         return;
     }
 
-const neueArbeitsmappe = XLSX.read(
-    XLSX.write(excelArbeitsmappe, {
-        bookType: "xlsx",
-        type: "array"
-    }),
-    {
-        type: "array"
-    }
-);
-
 const neuesArbeitsblatt =
     neueArbeitsmappe.Sheets[excelTabellenName];
 
