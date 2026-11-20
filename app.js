@@ -597,7 +597,20 @@ function sicher(text) {
 }
 
 function kontrollenZusammenfuehren() {
-    alert("Die Funktion zum Zusammenführen wird eingerichtet.");
+    const dateiAuswahl = document.createElement("input");
+
+    dateiAuswahl.type = "file";
+    dateiAuswahl.accept = ".xlsx";
+
+    dateiAuswahl.addEventListener("change", function() {
+        const datei = dateiAuswahl.files[0];
+
+        if (!datei) return;
+
+        alert("Ausgewählte Datei: " + datei.name);
+    });
+
+    dateiAuswahl.click();
 }
 
 // Anwendung starten
