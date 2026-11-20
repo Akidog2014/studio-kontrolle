@@ -601,13 +601,23 @@ function kontrollenZusammenfuehren() {
 
     dateiAuswahl.type = "file";
     dateiAuswahl.accept = ".xlsx";
+    dateiAuswahl.multiple = true;
 
     dateiAuswahl.addEventListener("change", function() {
-        const datei = dateiAuswahl.files[0];
+        const dateien = Array.from(dateiAuswahl.files);
 
-        if (!datei) return;
+        if (dateien.length === 0) return;
 
-        alert("Ausgewählte Datei: " + datei.name);
+        if (dateien.length !== 2) {
+            alert("Bitte genau zwei Excel-Dateien auswählen.");
+            return;
+        }
+
+        alert(
+            "Ausgewählt:\n" +
+            dateien[0].name + "\n" +
+            dateien[1].name
+        );
     });
 
     dateiAuswahl.click();
