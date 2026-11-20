@@ -497,24 +497,11 @@ const zelle = neuesArbeitsblatt.getCell(
 const alteKontrollen =
     zelle.value == null ? "" : String(zelle.value);
 
-        const neueEintraege = nichtExportiert
-            .sort((a, b) =>
-                a.zeitpunkt.localeCompare(b.zeitpunkt)
-            )
-            .map(k => {
-                const datum = k.datum
-                    ? k.datum.split("-").reverse().join(".")
-                    : "";
-
-                return [
-                    datum,
-                    k.uhrzeit + " Uhr",
-                    k.mitarbeiter,
-                    k.personen + " Personen kontrolliert",
-                    k.feststellungen,
-                    k.weitere || ""
-                ].filter(Boolean).join(", ");
-            });
+const neueEintraege = nichtExportiert
+    .sort((a, b) =>
+        a.zeitpunkt.localeCompare(b.zeitpunkt)
+    )
+    .map(k => kontrolltextErstellen(k));
 
 zelle.value = [
     alteKontrollen,
