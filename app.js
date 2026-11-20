@@ -341,53 +341,59 @@ function excelImportieren(e) {
     leser.onload = function(event) {
         try {
             excelDateiDaten = event.target.result.slice(0);
-            
+
             excelArbeitsmappe = XLSX.read(
                 event.target.result,
                 { type: "array" }
             );
 
-            excelTabellenName = excelArbeitsmappe.SheetNames[0];
             console.log("Excel-Arbeitsmappe:", excelArbeitsmappe);
-            console.log("Excel-Tabellenname:", excelTabellenName);
 
-            if (!excelTabellenName) {
-                alert("Kein Tabellenblatt gefunden.");
-                return;
-            }
+            const importierteStudios = [];
 
-            const tabelle = XLSX.utils.sheet_to_json(
-                excelArbeitsmappe.Sheets[excelTabellenName],
-                {
-                    header: 1,
-                    defval: "",
-                    raw: false
-                }
-            );
+            excelTabellenName = excelArbeitsmappe.SheetNames[0];
 
-            const importierteStudios = tabelle
-                .slice(1)
-                .map((zeile, index) => ({
-                    id: "excel-" + (index + 2) + "-" +
-                    String(zeile[0] || "").trim() + "-" +
-                    String(zeile[1] || "").trim(),
-                    ort: String(zeile[0] || "").trim(),
-                    adresse: String(zeile[1] || "").trim(),
-                    etablissement: String(zeile[2] || "").trim(),
-                    gebaeude: String(zeile[3] || "").trim(),
-                    kontrollen: String(zeile[4] || ""),
-                    kontakt: String(zeile[5] || "").trim(),
-                    bemerkung: String(zeile[6] || "").trim()
-                }))
-                .filter(studio =>
-                    studio.ort ||
-                    studio.adresse ||
-                    studio.etablissement ||
-                    studio.gebaeude ||
-                    studio.kontrollen ||
-                    studio.kontakt ||
-                    studio.bemerkung
+            excelArbeitsmappe.SheetNames.forEach(tabellenName => {
+
+                const tabelle = XLSX.utils.sheet_to_json(
+                    excelArbeitsmappe.Sheets[tabellenName],
+                    {
+                        header: 1,
+                        defval: "",
+                        raw: false
+                    }
                 );
+
+                const studiosAusTabelle = tabelle
+                    .slice(1)
+                    .map((zeile, index) => ({
+                        id: "excel-" + tabellenName + "-" +
+                            (index + 2) + "-" +
+                            String(zeile[0] || "").trim() + "-" +
+                            String(zeile[1] || "").trim(),
+
+                        excelTabellenName: tabellenName,
+
+                        ort: String(zeile[0] || "").trim(),
+                        adresse: String(zeile[1] || "").trim(),
+                        etablissement: String(zeile[2] || "").trim(),
+                        gebaeude: String(zeile[3] || "").trim(),
+                        kontrollen: String(zeile[4] || ""),
+                        kontakt: String(zeile[5] || "").trim(),
+                        bemerkung: String(zeile[6] || "").trim()
+                    }))
+                    .filter(studio =>
+                        studio.ort ||
+                        studio.adresse ||
+                        studio.etablissement ||
+                        studio.gebaeude ||
+                        studio.kontrollen ||
+                        studio.kontakt ||
+                        studio.bemerkung
+                    );
+
+                importierteStudios.push(...studiosAusTabelle);
+            });
 
             if (importierteStudios.length === 0) {
                 alert("Keine Studios gefunden.");
@@ -403,7 +409,9 @@ function excelImportieren(e) {
 
             alert(
                 importierteStudios.length +
-                " Studios erfolgreich importiert."
+                " Studios aus " +
+                excelArbeitsmappe.SheetNames.length +
+                " Tabellenblättern erfolgreich importiert."
             );
 
             startseite();
