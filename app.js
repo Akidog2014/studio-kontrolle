@@ -776,28 +776,59 @@ async function kontrollenZusammenfuehren() {
                 return;
             }
 
-            const dateiHandle = await window.showSaveFilePicker({
-                suggestedName: masterEintrag.name,
-                types: [{
-                    description: "Excel-Arbeitsmappe",
-                    accept: {
-                        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [".xlsx"]
-                    }
-                }]
-            });
+            const speicherButton = document.createElement("button");
 
-            const buffer = await master.xlsx.writeBuffer();
+speicherButton.textContent =
+    "Masterdatei jetzt überschreiben";
 
-            const schreibzugriff = await dateiHandle.createWritable();
-            await schreibzugriff.write(buffer);
-            await schreibzugriff.close();
+speicherButton.style.margin = "15px";
 
-            alert(
-                "Zusammenführung erfolgreich!\n\n" +
-                hinzugefuegt + " neue Kontrollen hinzugefügt.\n" +
-                uebersprungen + " doppelte Kontrollen übersprungen.\n\n" +
-                "Die Datei wurde gespeichert."
-            );
+app.appendChild(speicherButton);
+
+speicherButton.addEventListener("click", async function() {
+
+    speicherButton.disabled = true;
+
+    try {
+        const dateiHandle = await window.showSaveFilePicker({
+            suggestedName: masterEintrag.name,
+            types: [{
+                description: "Excel-Arbeitsmappe",
+                accept: {
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [".xlsx"]
+                }
+            }]
+        });
+
+        const buffer = await master.xlsx.writeBuffer();
+
+        const schreibzugriff =
+            await dateiHandle.createWritable();
+
+        await schreibzugriff.write(buffer);
+        await schreibzugriff.close();
+
+        speicherButton.remove();
+
+        alert(
+            "Zusammenführung erfolgreich!\n\n" +
+            hinzugefuegt + " neue Kontrollen hinzugefügt.\n" +
+            uebersprungen + " doppelte Kontrollen übersprungen.\n\n" +
+            "Die Datei wurde gespeichert."
+        );
+
+    } catch (fehler) {
+        speicherButton.disabled = false;
+
+        if (fehler.name === "AbortError") {
+            alert("Speichern abgebrochen. Die Masterdatei blieb unverändert.");
+            return;
+        }
+
+        console.error(fehler);
+        alert("Speicherfehler: " + fehler.message);
+    }
+});
 
         } catch (fehler) {
             if (fehler.name === "AbortError") {
