@@ -445,20 +445,6 @@ if (!neuesArbeitsblatt) {
     alert("Das Excel-Tabellenblatt wurde nicht gefunden.");
     return;
 }
-
-    if (!arbeitsblatt) {
-        alert("Das Excel-Tabellenblatt wurde nicht gefunden.");
-        return;
-    }
-
-const neuesArbeitsblatt =
-    neueArbeitsmappe.Sheets[excelTabellenName];
-
-    // Vorhandene Excel-Daten übernehmen
-    const bereich = XLSX.utils.decode_range(
-        neuesArbeitsblatt["!ref"]
-    );
-
     let anzahlExportiert = 0;
 
     const exportierteKontrollen = [];
