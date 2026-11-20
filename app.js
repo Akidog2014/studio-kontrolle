@@ -115,7 +115,7 @@ app.innerHTML = `
     document.getElementById("export")
         .addEventListener("click", kontrollenExportieren);
     document.getElementById("zusammenfuehren")
-    .addEventListener("click", kontrollenZusammenfuehren);
+        .addEventListener("click", kontrollenZusammenfuehren);
 }
 
 // Suche nach Studios
