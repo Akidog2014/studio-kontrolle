@@ -645,13 +645,14 @@ async function kontrollenZusammenfuehren() {
 
     dateiAuswahl.addEventListener("change", async function() {
         const dateien = Array.from(dateiAuswahl.files);
-        
-    if (dateien.length !== 3) {
-        alert("Bitte die Masterdatei und beide Exportdateien auswählen.");
-        return;
-    }
 
-                    const geladeneDateien = [];
+        if (dateien.length !== 3) {
+            alert("Bitte die Masterdatei und beide Exportdateien auswählen.");
+            return;
+        }
+
+        try {
+            const geladeneDateien = [];
 
             for (const datei of dateien) {
                 const dateiDaten = await datei.arrayBuffer();
@@ -692,24 +693,6 @@ async function kontrollenZusammenfuehren() {
                 "Exportdatei 1: " + exportDateien[0].name + "\n" +
                 "Exportdatei 2: " + exportDateien[1].name
             );
-
-                let anzahlIDs = 0;
-
-                idArbeitsblatt.eachRow(function(zeile, zeilenNummer) {
-                    if (
-                        zeilenNummer > 1 &&
-                        zeile.getCell(1).value
-                    ) {
-                        anzahlIDs++;
-                    }
-                });
-
-                ergebnis +=
-                    datei.name + ": " +
-                    anzahlIDs + " Kontroll-IDs gefunden\n";
-            }
-
-            alert(ergebnis);
 
         } catch (fehler) {
             console.error(fehler);
