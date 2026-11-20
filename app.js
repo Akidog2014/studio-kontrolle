@@ -32,6 +32,8 @@ let studios = JSON.parse(
 // Originale Excel-Arbeitsmappe für den Export behalten
 let excelArbeitsmappe = null;
 let excelTabellenName = null;
+let excelDateiDaten = null;
+
 // Kontrollhistorie lokal auf dem Gerät speichern
 const SPEICHER_SCHLUESSEL = "studioKontrollHistorie";
 
@@ -331,6 +333,8 @@ function excelImportieren(e) {
 
     leser.onload = function(event) {
         try {
+            excelDateiDaten = event.target.result.slice(0);
+            
             excelArbeitsmappe = XLSX.read(
                 event.target.result,
                 { type: "array" }
