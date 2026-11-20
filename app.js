@@ -546,6 +546,7 @@ nichtExportiert.forEach(k => {
     ]);
 });
 
+});
     // Arbeitsmappe erstellen
 
     const jetzt = new Date();
