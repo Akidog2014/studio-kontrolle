@@ -418,7 +418,7 @@ function excelImportieren(e) {
 
 // Kontrollen in die importierte Original-Excel-Datei schreiben
 
-function kontrollenExportieren() {
+async function kontrollenExportieren() {
     if (!window.XLSX) {
         alert("Die Excel-Bibliothek wurde nicht geladen.");
         return;
