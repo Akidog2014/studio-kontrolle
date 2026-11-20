@@ -655,48 +655,133 @@ async function kontrollenZusammenfuehren() {
             const geladeneDateien = [];
 
             for (const datei of dateien) {
-                const dateiDaten = await datei.arrayBuffer();
-
                 const arbeitsmappe = new ExcelJS.Workbook();
-                await arbeitsmappe.xlsx.load(dateiDaten);
 
-                const idArbeitsblatt =
-                    arbeitsmappe.getWorksheet("_KontrollIDs");
+                await arbeitsmappe.xlsx.load(
+                    await datei.arrayBuffer()
+                );
 
                 geladeneDateien.push({
                     name: datei.name,
-                    arbeitsmappe: arbeitsmappe,
-                    istExport: !!idArbeitsblatt
+                    arbeitsmappe,
+                    istExport: !!arbeitsmappe.getWorksheet("_KontrollIDs")
                 });
             }
 
-            const masterDateien = geladeneDateien.filter(
-                d => !d.istExport
-            );
+            const masterDateien = geladeneDateien.filter(d => !d.istExport);
+            const exportDateien = geladeneDateien.filter(d => d.istExport);
 
-            const exportDateien = geladeneDateien.filter(
-                d => d.istExport
-            );
-
-            if (
-                masterDateien.length !== 1 ||
-                exportDateien.length !== 2
-            ) {
+            if (masterDateien.length !== 1 || exportDateien.length !== 2) {
                 throw new Error(
                     "Es muss genau eine Masterdatei und zwei Exportdateien geben."
                 );
             }
 
+            const master = masterDateien[0].arbeitsmappe;
+            const masterBlatt = master.worksheets[0];
+
+            if (!masterBlatt) {
+                throw new Error("Die Masterdatei enthält kein Tabellenblatt.");
+            }
+
+            let masterIDs = master.getWorksheet("_KontrollIDs");
+
+            if (!masterIDs) {
+                masterIDs = master.addWorksheet("_KontrollIDs");
+                masterIDs.state = "veryHidden";
+
+                masterIDs.addRow([
+                    "Kontroll-ID",
+                    "Excel-Zeile",
+                    "Kontrolldatum",
+                    "Mitarbeiter",
+                    "Kontrolltext"
+                ]);
+            }
+
+            const vorhandeneIDs = new Set();
+
+            masterIDs.eachRow((zeile, nummer) => {
+                if (nummer > 1 && zeile.getCell(1).value) {
+                    vorhandeneIDs.add(String(zeile.getCell(1).value));
+                }
+            });
+
+            let hinzugefuegt = 0;
+            let uebersprungen = 0;
+
+            for (const exportDatei of exportDateien) {
+                const exportIDs =
+                    exportDatei.arbeitsmappe.getWorksheet("_KontrollIDs");
+
+                exportIDs.eachRow((zeile, nummer) => {
+                    if (nummer === 1) return;
+
+                    const id = String(zeile.getCell(1).value || "");
+                    const excelZeile = Number(zeile.getCell(2).value);
+                    const kontrolltext = zeile.getCell(5).value;
+
+                    if (!id || !excelZeile || !kontrolltext) {
+                        return;
+                    }
+
+                    if (vorhandeneIDs.has(id)) {
+                        uebersprungen++;
+                        return;
+                    }
+
+                    const zielzelle = masterBlatt.getCell(excelZeile, 5);
+
+                    const bisherigerInhalt =
+                        zielzelle.value == null
+                            ? ""
+                            : String(zielzelle.value);
+
+                    zielzelle.value = [
+                        bisherigerInhalt,
+                        String(kontrolltext)
+                    ].filter(Boolean).join("\n");
+
+                    masterIDs.addRow([
+                        id,
+                        excelZeile,
+                        zeile.getCell(3).value,
+                        zeile.getCell(4).value,
+                        kontrolltext
+                    ]);
+
+                    vorhandeneIDs.add(id);
+                    hinzugefuegt++;
+                });
+            }
+
+            const buffer = await master.xlsx.writeBuffer();
+
+            const blob = new Blob([buffer], {
+                type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            });
+
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+
+            link.href = url;
+            link.download = "Studio-Kontrolle-zusammengefuehrt.xlsx";
+
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+
             alert(
-                "Dateien erfolgreich erkannt:\n\n" +
-                "Masterdatei: " + masterDateien[0].name + "\n" +
-                "Exportdatei 1: " + exportDateien[0].name + "\n" +
-                "Exportdatei 2: " + exportDateien[1].name
+                "Zusammenführung abgeschlossen!\n\n" +
+                hinzugefuegt + " neue Kontrollen hinzugefügt.\n" +
+                uebersprungen + " doppelte Kontrollen übersprungen."
             );
 
         } catch (fehler) {
             console.error(fehler);
-            alert("Fehler: " + fehler.message);
+            alert("Fehler beim Zusammenführen: " + fehler.message);
         }
     });
 
