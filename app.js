@@ -636,6 +636,7 @@ function sicher(text) {
     })[zeichen]);
 }
 
+
 async function kontrollenZusammenfuehren() {
     const dateiAuswahl = document.createElement("input");
 
@@ -662,6 +663,7 @@ async function kontrollenZusammenfuehren() {
                 );
 
                 geladeneDateien.push({
+                    datei,
                     name: datei.name,
                     arbeitsmappe,
                     istExport: !!arbeitsmappe.getWorksheet("_KontrollIDs")
@@ -677,7 +679,8 @@ async function kontrollenZusammenfuehren() {
                 );
             }
 
-            const master = masterDateien[0].arbeitsmappe;
+            const masterEintrag = masterDateien[0];
+            const master = masterEintrag.arbeitsmappe;
             const masterBlatt = master.worksheets[0];
 
             if (!masterBlatt) {
@@ -721,9 +724,7 @@ async function kontrollenZusammenfuehren() {
                     const excelZeile = Number(zeile.getCell(2).value);
                     const kontrolltext = zeile.getCell(5).value;
 
-                    if (!id || !excelZeile || !kontrolltext) {
-                        return;
-                    }
+                    if (!id || !excelZeile || !kontrolltext) return;
 
                     if (vorhandeneIDs.has(id)) {
                         uebersprungen++;
@@ -755,31 +756,55 @@ async function kontrollenZusammenfuehren() {
                 });
             }
 
-            const buffer = await master.xlsx.writeBuffer();
+            if (hinzugefuegt === 0) {
+                alert(
+                    "Es gibt keine neuen Kontrollen.\n" +
+                    uebersprungen + " doppelte Kontrollen wurden erkannt."
+                );
+                return;
+            }
 
-            const blob = new Blob([buffer], {
-                type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            const bestaetigt = confirm(
+                "Die Zusammenführung ist vorbereitet.\n\n" +
+                hinzugefuegt + " neue Kontrollen werden ergänzt.\n" +
+                uebersprungen + " doppelte Kontrollen werden übersprungen.\n\n" +
+                "Möchtest du die bestehende Masterdatei überschreiben?"
+            );
+
+            if (!bestaetigt) {
+                alert("Vorgang abgebrochen. Die Masterdatei blieb unverändert.");
+                return;
+            }
+
+            const dateiHandle = await window.showSaveFilePicker({
+                suggestedName: masterEintrag.name,
+                types: [{
+                    description: "Excel-Arbeitsmappe",
+                    accept: {
+                        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [".xlsx"]
+                    }
+                }]
             });
 
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement("a");
+            const buffer = await master.xlsx.writeBuffer();
 
-            link.href = url;
-            link.download = "Studio-Kontrolle-zusammengefuehrt.xlsx";
-
-            document.body.appendChild(link);
-            link.click();
-            link.remove();
-
-            setTimeout(() => URL.revokeObjectURL(url), 1000);
+            const schreibzugriff = await dateiHandle.createWritable();
+            await schreibzugriff.write(buffer);
+            await schreibzugriff.close();
 
             alert(
-                "Zusammenführung abgeschlossen!\n\n" +
+                "Zusammenführung erfolgreich!\n\n" +
                 hinzugefuegt + " neue Kontrollen hinzugefügt.\n" +
-                uebersprungen + " doppelte Kontrollen übersprungen."
+                uebersprungen + " doppelte Kontrollen übersprungen.\n\n" +
+                "Die Datei wurde gespeichert."
             );
 
         } catch (fehler) {
+            if (fehler.name === "AbortError") {
+                alert("Speichern wurde abgebrochen. Die Masterdatei blieb unverändert.");
+                return;
+            }
+
             console.error(fehler);
             alert("Fehler beim Zusammenführen: " + fehler.message);
         }
@@ -787,5 +812,6 @@ async function kontrollenZusammenfuehren() {
 
     dateiAuswahl.click();
 }
+
 // Anwendung starten
 startseite();
