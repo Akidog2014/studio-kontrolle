@@ -680,6 +680,7 @@ function sicher(text) {
 
 
 async function kontrollenZusammenfuehren() {
+    alert("Neue Version der Zusammenführung wurde geladen.");
     const dateiAuswahl = document.createElement("input");
 
     dateiAuswahl.type = "file";
