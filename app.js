@@ -81,7 +81,9 @@ app.innerHTML = `
     <section>
         <h2>Studio-Kontrolle</h2>
         <p>Mitarbeiter: <strong>${sicher(mitarbeiter)}</strong></p>
-        <button id="suche">Studios suchen</button>
+        <button id="suche" style="margin-bottom: 35px;">
+            Studios suchen
+        </button>
 
         <button id="import">
             Excel-Datei importieren
