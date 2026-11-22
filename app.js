@@ -191,8 +191,11 @@ function studioAnzeigen(id) {
             <p><strong>Kontakt:</strong> ${sicher(studio.kontakt)}</p>
             <p><strong>Bemerkung:</strong> ${sicher(studio.bemerkung)}</p>
 
-            <h3>Bisherige Kontrollen aus Excel</h3>
-            <div id="excelKontrollen"></div>
+            <button id="excelKontrollenButton">
+            Bisherige Kontrollen anzeigen
+            </button>
+
+            <div id="excelKontrollen" style="display: none; white-space: pre-wrap;"></div>
 
             <h3>Neu erfasste Kontrollen</h3>
             <div id="historie"></div>
@@ -208,6 +211,19 @@ function studioAnzeigen(id) {
 
         excelKontrollen.textContent =
         studio.kontrollen || "Keine bisherigen Kontrollen vorhanden.";
+
+    const excelKontrollenButton =
+    document.getElementById("excelKontrollenButton");
+
+excelKontrollenButton.addEventListener("click", () => {
+    if (excelKontrollen.style.display === "none") {
+        excelKontrollen.style.display = "block";
+        excelKontrollenButton.textContent = "Bisherige Kontrollen ausblenden";
+    } else {
+        excelKontrollen.style.display = "none";
+        excelKontrollenButton.textContent = "Bisherige Kontrollen anzeigen";
+    }
+});
     
     const historie = document.getElementById("historie");
 
