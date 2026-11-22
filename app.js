@@ -191,7 +191,10 @@ function studioAnzeigen(id) {
             <p><strong>Kontakt:</strong> ${sicher(studio.kontakt)}</p>
             <p><strong>Bemerkung:</strong> ${sicher(studio.bemerkung)}</p>
 
-            <h3>Kontrollhistorie</h3>
+            <h3>Bisherige Kontrollen aus Excel</h3>
+            <div id="excelKontrollen"></div>
+
+            <h3>Neu erfasste Kontrollen</h3>
             <div id="historie"></div>
 
             <button id="neueKontrolle">
@@ -201,7 +204,11 @@ function studioAnzeigen(id) {
             <button id="zurueck">Zurück zur Suche</button>
         </section>
     `;
+    const excelKontrollen = document.getElementById("excelKontrollen");
 
+        excelKontrollen.textContent =
+        studio.kontrollen || "Keine bisherigen Kontrollen vorhanden.";
+    
     const historie = document.getElementById("historie");
 
     if (sortiert.length === 0) {
