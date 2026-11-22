@@ -723,11 +723,13 @@ async function kontrollenZusammenfuehren() {
             const masterDateien = geladeneDateien.filter(d => !d.istExport);
             const exportDateien = geladeneDateien.filter(d => d.istExport);
 
-            if (masterDateien.length !== 1 || exportDateien.length !== 2) {
-                throw new Error(
-                    "Es muss genau eine Masterdatei und zwei Exportdateien geben."
-                );
-            }
+if (masterDateien.length !== 1 || exportDateien.length !== 2) {
+    throw new Error(
+        "Erkennung der Dateien:\n" +
+        "Masterdateien: " + masterDateien.length + "\n" +
+        "Exportdateien: " + exportDateien.length
+    );
+}
 
             const masterEintrag = masterDateien[0];
             const master = masterEintrag.arbeitsmappe;
