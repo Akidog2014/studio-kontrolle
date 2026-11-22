@@ -785,7 +785,7 @@ const excelTabellenName = String(zeile.getCell(6).value || "");
                     );
                 }
 
-const zielzelle = masterBlatt.getCell(excelZeile, 5);
+const zielzelle = master.getWorksheet(excelTabellenName).getCell(excelZeile, 5);
 
                     const bisherigerInhalt =
                         zielzelle.value == null
