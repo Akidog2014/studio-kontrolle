@@ -726,7 +726,7 @@ if (masterDateien.length !== 1 || exportDateien.length !== 2) {
             const masterEintrag = masterDateien[0];
             const master = masterEintrag.arbeitsmappe;
 
-            if (!masterBlatt) {
+            if (master.worksheets.length === 0) {
                 throw new Error("Die Masterdatei enthält kein Tabellenblatt.");
             }
 
@@ -778,14 +778,14 @@ const excelTabellenName = String(zeile.getCell(6).value || "");
 
                     const masterBlatt = master.getWorksheet(excelTabellenName);
 
-                    if (!masterBlatt) {
-                    throw new Error(
-                        "Das Tabellenblatt " + excelTabellenName +
-                        " wurde in der Masterdatei nicht gefunden."
-                    );
-                }
+                        if (!masterBlatt) {
+                        throw new Error(
+                            "Das Tabellenblatt " + excelTabellenName +
+                            " wurde in der Masterdatei nicht gefunden."
+                        );
+                    }
 
-const zielzelle = master.getWorksheet(excelTabellenName).getCell(excelZeile, 5);
+const zielzelle = masterBlatt.getCell(excelZeile, 5);
 
                     const bisherigerInhalt =
                         zielzelle.value == null
