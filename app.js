@@ -408,6 +408,21 @@ id: "excel-" +
                 return;
             }
 
+            const bestaetigt = confirm(
+            "Möchtest du wirklich alle bisher gespeicherten Kontrollen löschen und die neue Excel-Datei importieren?\n\n" +
+            "Dieser Vorgang kann nicht rückgängig gemacht werden."
+        );
+
+        if (!bestaetigt) {
+            alert("Import abgebrochen. Die bisherigen Daten bleiben erhalten.");
+            return;
+        }
+
+// Bisherige Kontrollhistorie löschen
+kontrollHistorie = {};
+
+localStorage.removeItem(SPEICHER_SCHLUESSEL);
+            
             studios = importierteStudios;
 
             localStorage.setItem(
