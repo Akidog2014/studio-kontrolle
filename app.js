@@ -615,6 +615,24 @@ try {
         type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     });
 
+    const exportDatei = new File(
+    [blob],
+    dateiname,
+    {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    }
+    );
+    
+if (navigator.canShare && navigator.canShare({ files: [exportDatei] })) {
+
+    await navigator.share({
+        files: [exportDatei],
+        title: "Studio-Kontrolle Export",
+        text: "Hier ist die exportierte Kontrollliste."
+    });
+
+} else {
+
     const url = URL.createObjectURL(blob);
 
     const link = document.createElement("a");
@@ -626,6 +644,7 @@ try {
     link.remove();
 
     setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
 
 } catch (fehler) {
     alert("Export fehlgeschlagen.");
