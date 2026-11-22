@@ -708,15 +708,7 @@ async function kontrollenZusammenfuehren() {
                     datei,
                     name: datei.name,
                     arbeitsmappe,
-                    istExport: (() => {
-    const ids = arbeitsmappe.getWorksheet("_KontrollIDs");
-
-    if (!ids || ids.rowCount <= 1) {
-        return false;
-    }
-
-    return ids.getRow(2).getCell(1).value != null;
-})()
+                istExport: datei.name.includes("Export")
                 });
             }
 
